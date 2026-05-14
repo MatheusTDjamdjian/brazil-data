@@ -1,0 +1,48 @@
+{
+  "name": "brazil-data",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Assistente contábil com IA que consulta dados públicos brasileiros via servidor MCP, otimizado para custo em produção.",
+  "license": "MIT",
+  "author": "Matheus Tasso",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "start": "tsx scripts/start.ts",
+    "start:nodocker": "cross-env NO_DOCKER=1 tsx scripts/start.ts",
+    "check": "tsx scripts/check-prereqs.ts && tsx scripts/check-env.ts",
+    "seed": "pnpm --filter @brazil-data/api exec tsx prisma/seed.ts",
+    "metrics": "curl -s http://localhost:3001/admin/metrics/summary | node -e \"let s='';process.stdin.on('data',c=>s+=c);process.stdin.on('end',()=>console.log(JSON.stringify(JSON.parse(s),null,2)))\"",
+    "down": "docker compose down",
+    "reset": "docker compose down -v && tsx scripts/start.ts",
+    "logs": "docker compose logs -f",
+    "dev:all": "concurrently -k -n api,web -c blue,magenta \"pnpm --filter @brazil-data/api dev\" \"pnpm --filter @brazil-data/web dev\"",
+    "dev:api": "pnpm --filter @brazil-data/api dev",
+    "dev:web": "pnpm --filter @brazil-data/web dev",
+    "build": "pnpm -r --if-present build",
+    "test": "pnpm -r --if-present test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^20.17.10",
+    "chalk": "^5.4.1",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.7",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.2",
+    "zod": "^3.24.1"
+  },
+  "packageManager": "pnpm@10.0.0"
+}

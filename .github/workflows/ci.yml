@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint · Typecheck · Tests · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm exec prettier --check .
+
+      # ---------- mcp-server ----------
+      - name: Typecheck mcp-server
+        run: pnpm --filter @brazil-data/mcp-server exec tsc -p tsconfig.json --noEmit
+
+      - name: Test mcp-server (Vitest)
+        run: pnpm --filter @brazil-data/mcp-server test
+
+      - name: Build mcp-server
+        run: pnpm --filter @brazil-data/mcp-server build
+
+      - name: Smoke test do MCP stdio
+        run: pnpm --filter @brazil-data/mcp-server test:smoke
+
+      # ---------- api ----------
+      - name: Typecheck api
+        run: pnpm --filter @brazil-data/api typecheck
+
+      - name: Test api unit (Jest)
+        run: pnpm --filter @brazil-data/api test
+
+      - name: Test api e2e (Jest)
+        run: pnpm --filter @brazil-data/api test:e2e
+
+      - name: Build api
+        run: pnpm --filter @brazil-data/api build
+
+      # ---------- web ----------
+      - name: Typecheck web
+        run: pnpm --filter @brazil-data/web typecheck
+
+      - name: Build web
+        run: pnpm --filter @brazil-data/web build
