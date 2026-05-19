@@ -1,0 +1,35 @@
+# Render Blueprint — sobe a API NestJS na Render (free tier).
+#
+# Postgres e Redis NÃO entram aqui: o tier gratuito da Render para
+# esses serviços não existe mais. Use:
+#   - Postgres: https://neon.tech (free 256 MB)
+#   - Redis:    https://upstash.com (free 10k cmd/dia)
+# Depois cole as URLs em DATABASE_URL e REDIS_URL no painel da Render.
+#
+# O mcp-server (stdio, Claude Desktop) NÃO sobe pra nuvem — fica local.
+# A API consome o pacote in-process via dynamic import.
+
+services:
+  - type: web
+    name: brazil-data-api
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @brazil-data/api... build && pnpm --filter @brazil-data/api exec prisma migrate deploy
+    startCommand: cd packages/api && API_PORT=$PORT node dist/main.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: HISTORY_MAX_TURNS
+        value: "6"
+      - key: ENABLE_RESPONSE_CACHE
+        value: "true"
+      - key: RESPONSE_CACHE_TTL_SECONDS
+        value: "3600"
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
